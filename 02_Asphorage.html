@@ -3,27 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Astrophage Traversal Map</title>
+<title>Astrophage Life Cycle — Project Hail Mary</title>
 <link rel="stylesheet" href="asphorage.css">
 </head>
-<body class="page-02">
+<body class="page-03">
 <div class="container">
-  <h1>ASTROPHAGE TRAVERSAL MAP — PROJECT HAIL MARY</h1>
+  <h1>ASTROPHAGE LIFE CYCLE — PROJECT HAIL MARY / ANDY WEIR</h1>
 
   <div class="phase-bar">
-    <button class="pb active" data-p="0">01 — origin</button>
-    <button class="pb" data-p="1">02 — migration</button>
-    <button class="pb" data-p="2">03 — infection</button>
-    <button class="pb" data-p="3">04 — crisis</button>
+    <button class="pb active" data-p="0">01 — energize</button>
+    <button class="pb" data-p="1">02 — migrate out</button>
+    <button class="pb" data-p="2">03 — breed on venus</button>
+    <button class="pb" data-p="3">04 — return × 2</button>
+    <button class="pb" data-p="4">05 — crisis</button>
   </div>
 
   <canvas id="sc"></canvas>
 
   <div class="stats">
     <div class="stat-card"><div class="stat-label">SOLAR OUTPUT</div><div class="stat-val" id="st-sol">100%</div></div>
-    <div class="stat-card"><div class="stat-label">VENUS CO₂</div><div class="stat-val" id="st-co2">100%</div></div>
-    <div class="stat-card"><div class="stat-label">COLONY SIZE</div><div class="stat-val" id="st-col">—</div></div>
-    <div class="stat-card"><div class="stat-label">THREAT LEVEL</div><div class="stat-val" id="st-thr">NONE</div></div>
+    <div class="stat-card"><div class="stat-label">VENUS CO₂</div><div class="stat-val" id="st-co2">96%</div></div>
+    <div class="stat-card"><div class="stat-label">COLONY SIZE</div><div class="stat-val" id="st-col">N</div></div>
+    <div class="stat-card"><div class="stat-label">CYCLE</div><div class="stat-val" id="st-cyc">1</div></div>
   </div>
 
   <div class="log" id="pdesc"></div>
@@ -32,230 +33,219 @@
 <script>
 const cv = document.getElementById('sc');
 const g = cv.getContext('2d');
-let phase = 0, tick = 0, parts = [];
+let phase=0, tick=0, parts=[], cycle=1;
 
-const SX = 298, SY = 168;
-const sr = s => { const v = Math.sin(s * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-const STARS = Array.from({length: 160}, (_, i) => ({
-  x: sr(i) * 680, y: sr(i + 50) * 340,
-  r: .5 + sr(i + 100) * .9,
-  a: .2 + sr(i + 200) * .5
-}));
-const ISPOT = Array.from({length: 18}, (_, i) => ({
-  a0: (i / 18) * Math.PI * 2 + .4,
-  fr: 4 + sr(i) * 12,
-  sz: 1.3 + sr(i + 50) * 2.2,
-  sp: .002 + sr(i + 80) * .004
-}));
-const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
+const SX=300, SY=162;
+const sr=s=>{const v=Math.sin(s*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+const STARS=Array.from({length:150},(_,i)=>({x:sr(i)*680,y:sr(i+50)*330,r:.5+sr(i+100)*.9,a:.18+sr(i+200)*.45}));
+const lerp=(a,b,t)=>a+(b-a)*Math.max(0,Math.min(1,t));
 
-const PL = [
-  {id: 'mercury', or: 54,  an: 1.2,        r: 3.2, col: '#B4B2A9', lbl: 'mercury'},
-  {id: 'venus',   or: 87,  an: Math.PI,     r: 5.5, col: '#FAC775', lbl: 'venus'},
-  {id: 'earth',   or: 130, an: -0.785,      r: 6.5, col: '#85B7EB', lbl: 'earth'},
-  {id: 'mars',    or: 172, an: 2.5,         r: 4.8, col: '#F0997B', lbl: 'mars'}
-];
-const VP = {x: SX + Math.cos(Math.PI) * 87, y: SY};
-const EP = {x: SX + Math.cos(-0.785) * 130, y: SY + Math.sin(-0.785) * 130};
-
-const PDATA = [
-  {
-    sol: 100, co2: 100, col: '~10⁶',  thr: 'NONE',     tc: '#e0e0e8',
-    desc: 'LOG 001 — Astrophage first detected in Venusian upper atmosphere. Feed vector: CO₂. Energy source: solar radiation. Self-sustaining colony present. Migration velocity: zero. No threat to Sol at this time.'
-  },
-  {
-    sol: 99,  co2: 78,  col: '~10¹²', thr: 'MONITOR',  tc: '#EF9F27',
-    desc: 'LOG 047 — Mass migration event confirmed. Colony tracking inward along radiation gradient. Venus CO₂ depleting at 2.3% per day. Astrophage responding to higher-energy radiation source. Estimated Sol contact: 14 months.'
-  },
-  {
-    sol: 93,  co2: 22,  col: '~10¹⁸', thr: 'CRITICAL', tc: '#D85A30',
-    desc: 'LOG 312 — Astrophage confirmed on solar surface. Exponential reproduction cycle active. Solar output declining 0.4% per month. Venus CO₂ near depletion — Sol is now the primary host. No natural termination mechanism identified.'
-  },
-  {
-    sol: 79,  co2: 4,   col: '~10²⁴', thr: 'HAIL MARY',tc: '#E24B4A',
-    desc: 'LOG 891 — Solar output -21% and falling. Climate projections: catastrophic cooling within 30 years. International committee authorizes Hail Mary protocol. One astronaut. One ship. No extraction plan. No backup.'
-  }
+const PL=[
+  {id:'mercury',or:54,an:1.2,  r:3.2,col:'#B4B2A9',lbl:'mercury'},
+  {id:'venus',  or:87,an:Math.PI,r:5.5,col:'#FAC775',lbl:'venus'},
+  {id:'earth',  or:130,an:-.785,r:6.5,col:'#85B7EB',lbl:'earth'},
+  {id:'mars',   or:172,an:2.5,  r:4.8,col:'#F0997B',lbl:'mars'}
 ];
 
-function initParts() {
-  parts = [];
-  if (phase === 0) {
-    for (let i = 0; i < 50; i++)
-      parts.push({t: 0, ba: (i / 50) * Math.PI * 2, br: 6 + sr(i) * 9, sp: .01 + sr(i + 10) * .01});
-  } else if (phase === 1) {
-    for (let i = 0; i < 90; i++)
-      parts.push({t: 1, pr: i / 90, sp: .004 + sr(i) * .003, off: (sr(i) * 2 - 1) * 13});
-  } else if (phase >= 2) {
-    for (let i = 0; i < 70; i++)
-      parts.push({t: 2, ang: (i / 70) * Math.PI * 2, r: 22 + sr(i) * 11, spd: .007 + sr(i) * .005});
-    if (phase === 3)
-      for (let i = 0; i < 28; i++)
-        parts.push({t: 3, pr: sr(i) * .65, sp: .003 + sr(i) * .002, off: (sr(i + 30) * 2 - 1) * 15});
+const VP={x:SX+Math.cos(Math.PI)*87, y:SY};
+
+const PDATA=[
+  {sol:100,co2:96,  cyc:1,
+   desc:'CYCLE 1 — Astrophage on Sol\'s surface. Absorbing stellar radiation, storing energy internally. The Sun\'s magnetic field funnels them to the north pole. From there, away from solar glare, they can detect Venus\'s CO₂ spectral signature at 4.26μm and 18.31μm.'},
+  {sol:100,co2:96,  cyc:1,
+   desc:'MIGRATION OUT — Full energy stored. Colony departs Sol along the Petrova line at 0.92c — 92% the speed of light. Destination: Venus upper atmosphere, 50km altitude. Venus has 90 atmospheres of near-pure CO₂. That\'s the signal they\'re following.'},
+  {sol:100,co2:74,  cyc:1,
+   desc:'BREEDING ON VENUS — Astrophage collect CO₂ to synthesize proteins and DNA. Energy from the Sun powers the reaction. Colony undergoes mitosis — each cell divides into two. Venus CO₂ depleting. Population doubled. Both parent and child are now ready to return.'},
+  {sol:97, co2:74,  cyc:2,
+   desc:'RETURN × 2 — Parent AND child return to Sol along the Petrova line. Two cells where one left. Each cycle the colony doubles. Back on Sol\'s surface: energize again. The cycle begins anew. This is the Petrova line — bidirectional traffic, always getting busier.'},
+  {sol:79, co2:8,   cyc:14,
+   desc:'CRISIS — Fourteen cycles in. Colony is 2¹⁴ × the original size. Solar output -21%. Venus CO₂ nearly depleted. The colony will need to find a new CO₂ source — or migrate to another star. This is why every star in the neighborhood is dimming. Not just Sol.'}
+];
+
+function initParts(){
+  parts=[];
+  const count = Math.min(6+cycle*4, 80);
+
+  if(phase===0){
+    for(let i=0;i<count;i++)
+      parts.push({t:'sun', ang:(i/count)*Math.PI*2, r:22+sr(i)*10, spd:.008+sr(i)*.005, col:'#FAC775'});
+  } else if(phase===1){
+    for(let i=0;i<Math.min(count,70);i++)
+      parts.push({t:'out', pr:(i/count), sp:.005+sr(i)*.003, off:(sr(i)*2-1)*11, col:'#FAC775'});
+  } else if(phase===2){
+    for(let i=0;i<count;i++){
+      const stage=i%3;
+      parts.push({t:'venus', ang:(i/count)*Math.PI*2+sr(i), r:6+sr(i)*9, spd:.012+sr(i)*.008,
+                  col: stage===0?'#FAC775':'#EF9F27', splitting: sr(i)<0.3});
+    }
+  } else if(phase===3){
+    const total=Math.min(count*2,90);
+    for(let i=0;i<total;i++)
+      parts.push({t:'back', pr:sr(i)*.9, sp:.004+sr(i)*.003, off:(sr(i)*2-1)*13,
+                  col: i<total/2?'#FAC775':'#EF9F27'});
+  } else if(phase===4){
+    for(let i=0;i<90;i++)
+      parts.push({t:'sun', ang:(i/90)*Math.PI*2, r:22+sr(i)*11, spd:.009+sr(i)*.006,
+                  col: i%3===0?'#D85A30':'#EF9F27'});
+    for(let i=0;i<30;i++)
+      parts.push({t:'out', pr:sr(i)*.8, sp:.006+sr(i)*.004, off:(sr(i)*2-1)*10, col:'#E24B4A'});
   }
 }
 
-function getInf() {
-  if (phase < 2) return phase === 1 ? .05 : 0;
-  return phase === 2 ? .44 + Math.sin(tick * .02) * .06 : .83 + Math.sin(tick * .015) * .04;
+function getInf(){
+  if(phase<3) return 0.02;
+  if(phase===3) return 0.15+Math.sin(tick*.02)*.04;
+  return 0.82+Math.sin(tick*.015)*.04;
 }
 
-function draw() {
-  const dpr = devicePixelRatio || 1;
-  const W = cv.width, H = cv.height;
-  const cw = W / dpr, ch = H / dpr;
+function drawPetrovaLine(){
+  const alpha = phase===1||phase===3||phase===4 ? 0.22 : 0.08;
+  g.beginPath(); g.moveTo(VP.x,VP.y); g.lineTo(SX,SY);
+  g.strokeStyle=`rgba(250,199,117,${alpha})`; g.lineWidth=phase===1||phase===3?1.5:0.8;
+  g.setLineDash([4,8]); g.stroke(); g.setLineDash([]);
+  if(phase===1||phase===3||phase===4){
+    g.font='8px monospace'; g.fillStyle='rgba(250,199,117,0.5)';
+    g.textAlign='center';
+    const mx=(SX+VP.x)/2, my=(SY+VP.y)/2-10;
+    g.fillText('petrova line — 0.92c',mx,my);
+  }
+}
+
+function draw(){
+  const dpr=devicePixelRatio||1;
+  const W=cv.width,H=cv.height;
+  const cw=W/dpr,ch=H/dpr;
   g.save();
-  g.scale(dpr * (cw / 680), dpr * (ch / 340));
+  g.scale(dpr*(cw/680),dpr*(ch/330));
 
-  g.fillStyle = '#040710';
-  g.fillRect(0, 0, 680, 340);
+  g.fillStyle='#040710'; g.fillRect(0,0,680,330);
 
-  // Stars
-  STARS.forEach(s => {
-    g.beginPath(); g.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    g.fillStyle = `rgba(200,205,235,${s.a})`; g.fill();
+  STARS.forEach(s=>{
+    g.beginPath(); g.arc(s.x,s.y,s.r,0,Math.PI*2);
+    g.fillStyle=`rgba(200,205,235,${s.a})`; g.fill();
   });
 
-  const inf = getInf();
+  const inf=getInf();
 
-  // Sun glow
-  for (let gr = 54; gr > 23; gr -= 5) {
-    g.beginPath(); g.arc(SX, SY, gr, 0, Math.PI * 2);
-    g.fillStyle = `rgba(255,148,28,${.055 * (1 - inf * .68) * (1 - (gr - 23) / 33)})`; g.fill();
+  for(let gr=54;gr>23;gr-=5){
+    g.beginPath(); g.arc(SX,SY,gr,0,Math.PI*2);
+    g.fillStyle=`rgba(255,148,28,${.055*(1-inf*.68)*(1-(gr-23)/33)})`; g.fill();
   }
 
-  // Orbit rings
-  PL.forEach(p => {
-    g.beginPath(); g.arc(SX, SY, p.or, 0, Math.PI * 2);
-    g.strokeStyle = 'rgba(155,160,200,.13)'; g.lineWidth = .6; g.stroke();
+  PL.forEach(p=>{
+    g.beginPath(); g.arc(SX,SY,p.or,0,Math.PI*2);
+    g.strokeStyle='rgba(155,160,200,.12)'; g.lineWidth=.6; g.stroke();
   });
 
-  // Sun body
-  const rc = Math.floor(lerp(255, 125, inf));
-  const gc = Math.floor(lerp(178, 60,  inf));
-  const bc = Math.floor(lerp(38,  15,  inf));
-  g.beginPath(); g.arc(SX, SY, 22, 0, Math.PI * 2);
-  g.fillStyle = `rgb(${rc},${gc},${bc})`; g.fill();
+  drawPetrovaLine();
 
-  // Infection spots
-  if (inf > .03) {
-    ISPOT.forEach((sp, i) => {
-      const thresh = i * .048;
-      const al = Math.min(1, (inf - thresh) * 3.5);
-      if (al <= 0) return;
-      const sa = sp.a0 + tick * sp.sp;
-      const fr = Math.min(sp.fr, 17);
-      const fx = SX + Math.cos(sa) * fr * .56;
-      const fy = SY + Math.sin(sa) * fr * .56;
-      g.beginPath(); g.arc(fx, fy, sp.sz * al, 0, Math.PI * 2);
-      g.fillStyle = `rgba(45,15,0,${.92 * al})`; g.fill();
-    });
-  }
+  const rc=Math.floor(lerp(255,125,inf));
+  const gc=Math.floor(lerp(178,60,inf));
+  const bc=Math.floor(lerp(38,15,inf));
+  g.beginPath(); g.arc(SX,SY,22,0,Math.PI*2);
+  g.fillStyle=`rgb(${rc},${gc},${bc})`; g.fill();
 
-  // SOL label
-  g.font = '9px monospace'; g.textAlign = 'center';
-  g.fillStyle = 'rgba(255,175,55,.65)';
-  g.fillText('SOL', SX, SY + 34);
-
-  // Planets
-  PL.forEach(p => {
-    const px = SX + Math.cos(p.an) * p.or;
-    const py = SY + Math.sin(p.an) * p.or;
-    const hiV = p.id === 'venus' && phase <= 1;
-    const hiE = p.id === 'earth' && phase === 3;
-    if (hiV || hiE) {
-      g.beginPath(); g.arc(px, py, p.r + 6, 0, Math.PI * 2);
-      g.strokeStyle = hiE ? 'rgba(226,75,74,.5)' : 'rgba(250,200,120,.45)';
-      g.lineWidth = 1.2; g.stroke();
+  if(inf>0.1){
+    for(let i=0;i<14;i++){
+      const al=Math.min(1,(inf-.1)*2.5);
+      const sa=(i/14)*Math.PI*2+tick*.003;
+      const fr=5+sr(i)*12, sz=1.5+sr(i+50)*2;
+      const fx=SX+Math.cos(sa)*Math.min(fr,16)*.56;
+      const fy=SY+Math.sin(sa)*Math.min(fr,16)*.56;
+      g.beginPath(); g.arc(fx,fy,sz*al,0,Math.PI*2);
+      g.fillStyle=`rgba(45,15,0,${.9*al})`; g.fill();
     }
-    g.beginPath(); g.arc(px, py, p.r, 0, Math.PI * 2);
-    g.fillStyle = p.col; g.fill();
-    g.font = '9px monospace';
-    g.fillStyle = 'rgba(185,190,215,.6)';
-    g.textAlign = 'center';
-    g.fillText(p.lbl, px, py - p.r - 5);
-  });
-
-  // Migration guide line
-  if (phase === 1) {
-    g.beginPath(); g.moveTo(VP.x, VP.y); g.lineTo(SX, SY);
-    g.strokeStyle = 'rgba(250,200,120,.1)'; g.lineWidth = 1;
-    g.setLineDash([3, 7]); g.stroke(); g.setLineDash([]);
   }
 
-  // Particles
-  parts.forEach(p => {
-    if (p.t === 0) {
-      const a = p.ba + tick * p.sp;
-      const px = VP.x + Math.cos(a) * p.br, py = VP.y + Math.sin(a) * p.br;
-      g.beginPath(); g.arc(px, py, 1.7, 0, Math.PI * 2);
-      g.fillStyle = 'rgba(250,200,118,.8)'; g.fill();
+  g.font='9px monospace'; g.textAlign='center';
+  g.fillStyle='rgba(255,175,55,.65)'; g.fillText('SOL',SX,SY+33);
 
-    } else if (p.t === 1) {
-      p.pr = (p.pr + p.sp) % 1;
-      const dx = SX - VP.x, dy = SY - VP.y, len = Math.sqrt(dx * dx + dy * dy);
-      const nx = -dy / len, ny = dx / len;
-      const px = lerp(VP.x, SX, p.pr) + nx * p.off * Math.sin(p.pr * Math.PI);
-      const py = lerp(VP.y, SY, p.pr) + ny * p.off * Math.sin(p.pr * Math.PI);
-      g.beginPath(); g.arc(px, py, 1.8, 0, Math.PI * 2);
-      g.fillStyle = `rgba(250,175,35,${.28 + p.pr * .68})`; g.fill();
+  PL.forEach(p=>{
+    const px=SX+Math.cos(p.an)*p.or;
+    const py=SY+Math.sin(p.an)*p.or;
+    const hiV=p.id==='venus';
+    if(hiV&&phase>=2&&phase<=3){
+      g.beginPath(); g.arc(px,py,p.r+7,0,Math.PI*2);
+      g.strokeStyle='rgba(250,199,117,0.5)'; g.lineWidth=1.2; g.stroke();
+    }
+    g.beginPath(); g.arc(px,py,p.r,0,Math.PI*2);
+    g.fillStyle=p.col; g.fill();
+    g.font='9px monospace'; g.fillStyle='rgba(185,190,215,.6)'; g.textAlign='center';
+    g.fillText(p.lbl,px,py-p.r-5);
+  });
 
-    } else if (p.t === 2) {
-      p.ang += p.spd;
-      g.beginPath(); g.arc(SX + Math.cos(p.ang) * p.r, SY + Math.sin(p.ang) * p.r, 1.8, 0, Math.PI * 2);
-      g.fillStyle = 'rgba(205,95,18,.75)'; g.fill();
+  parts.forEach(p=>{
+    if(p.t==='sun'){
+      p.ang+=p.spd;
+      g.beginPath(); g.arc(SX+Math.cos(p.ang)*p.r,SY+Math.sin(p.ang)*p.r,1.8,0,Math.PI*2);
+      g.fillStyle=p.col+'cc'; g.fill();
 
-    } else if (p.t === 3) {
-      p.pr = (p.pr + p.sp) % 1;
-      const dx = EP.x - SX, dy = EP.y - SY, len = Math.sqrt(dx * dx + dy * dy);
-      const nx = -dy / len, ny = dx / len;
-      const px = lerp(SX, EP.x, p.pr) + nx * p.off * Math.sin(p.pr * Math.PI);
-      const py = lerp(SY, EP.y, p.pr) + ny * p.off * Math.sin(p.pr * Math.PI);
-      g.beginPath(); g.arc(px, py, 1.5, 0, Math.PI * 2);
-      g.fillStyle = `rgba(226,75,74,${.35 + p.pr * .55})`; g.fill();
+    } else if(p.t==='out'){
+      p.pr=(p.pr+p.sp)%1;
+      const dx=VP.x-SX, dy=VP.y-SY, len=Math.sqrt(dx*dx+dy*dy);
+      const nx=-dy/len, ny=dx/len;
+      const px=lerp(SX,VP.x,p.pr)+nx*p.off*Math.sin(p.pr*Math.PI);
+      const py=lerp(SY,VP.y,p.pr)+ny*p.off*Math.sin(p.pr*Math.PI);
+      const sz=1.5+p.pr*.5;
+      g.beginPath(); g.arc(px,py,sz,0,Math.PI*2);
+      g.fillStyle=`rgba(250,199,117,${.35+p.pr*.55})`; g.fill();
+
+    } else if(p.t==='venus'){
+      p.ang+=p.spd;
+      const px=VP.x+Math.cos(p.ang)*p.r;
+      const py=VP.y+Math.sin(p.ang)*p.r;
+      g.beginPath(); g.arc(px,py,1.8,0,Math.PI*2);
+      g.fillStyle=p.col+'cc'; g.fill();
+      if(p.splitting&&tick%60<10){
+        g.beginPath(); g.arc(px+3,py,1.3,0,Math.PI*2);
+        g.fillStyle='rgba(239,159,39,0.6)'; g.fill();
+      }
+
+    } else if(p.t==='back'){
+      p.pr=(p.pr+p.sp)%1;
+      const dx=SX-VP.x, dy=SY-VP.y, len=Math.sqrt(dx*dx+dy*dy);
+      const nx=-dy/len, ny=dx/len;
+      const px=lerp(VP.x,SX,p.pr)+nx*p.off*Math.sin(p.pr*Math.PI);
+      const py=lerp(VP.y,SY,p.pr)+ny*p.off*Math.sin(p.pr*Math.PI);
+      g.beginPath(); g.arc(px,py,1.8,0,Math.PI*2);
+      g.fillStyle=`${p.col}${Math.floor((.3+p.pr*.65)*255).toString(16).padStart(2,'0')}`; g.fill();
     }
   });
 
-  // Phase label overlay
-  g.font = '500 9px monospace';
-  g.fillStyle = 'rgba(155,158,188,.38)';
-  g.textAlign = 'left';
-  g.fillText(`PHASE ${phase + 1} / 4  ·  ASTROPHAGE TRAVERSAL MAP`, 12, 16);
-
+  g.font='500 9px monospace'; g.fillStyle='rgba(155,158,188,.38)';
+  g.textAlign='left'; g.fillText(`PHASE ${phase+1} / 5  ·  ASTROPHAGE LIFE CYCLE`,12,16);
   g.restore();
 }
 
-function updateStats() {
-  const d = PDATA[phase];
-  const sol = document.getElementById('st-sol');
-  sol.textContent = d.sol + '%';
-  sol.style.color = d.sol < 85 ? '#E24B4A' : d.sol < 99 ? '#EF9F27' : '#e0e0e8';
-  document.getElementById('st-co2').textContent = d.co2 + '%';
-  document.getElementById('st-col').textContent = d.col;
-  const thr = document.getElementById('st-thr');
-  thr.textContent = d.thr;
-  thr.style.color = d.tc;
-  document.getElementById('pdesc').textContent = d.desc;
+function updateStats(){
+  const d=PDATA[phase];
+  const sol=document.getElementById('st-sol');
+  sol.textContent=d.sol+'%';
+  sol.style.color=d.sol<85?'#E24B4A':d.sol<99?'#EF9F27':'';
+  document.getElementById('st-co2').textContent=d.co2+'%';
+  const colSizes=['N','N','2N','2N → 4N','2¹⁴N'];
+  document.getElementById('st-col').textContent=colSizes[phase];
+  document.getElementById('st-cyc').textContent=d.cyc;
+  document.getElementById('pdesc').textContent=d.desc;
 }
 
-function setPhase(p) {
-  phase = p; tick = 0;
-  document.querySelectorAll('.pb').forEach(b => b.classList.toggle('active', +b.dataset.p === p));
-  initParts();
-  updateStats();
+function setPhase(p){
+  phase=p; tick=0;
+  cycle=p===4?14:p>=3?2:1;
+  document.querySelectorAll('.pb').forEach(b=>b.classList.toggle('active',+b.dataset.p===p));
+  initParts(); updateStats();
 }
 
-function loop() { tick++; draw(); requestAnimationFrame(loop); }
+function loop(){ tick++; draw(); requestAnimationFrame(loop); }
 
-function resize() {
-  const dpr = devicePixelRatio || 1;
-  const rect = cv.getBoundingClientRect();
-  cv.width = rect.width * dpr;
-  cv.height = rect.height * dpr;
+function resize(){
+  const dpr=devicePixelRatio||1, rect=cv.getBoundingClientRect();
+  cv.width=rect.width*dpr; cv.height=rect.height*dpr;
 }
 
-document.querySelectorAll('.pb').forEach(b => b.addEventListener('click', () => setPhase(+b.dataset.p)));
-window.addEventListener('resize', resize);
-window.addEventListener('load', () => { resize(); setPhase(0); loop(); });
+document.querySelectorAll('.pb').forEach(b=>b.addEventListener('click',()=>setPhase(+b.dataset.p)));
+window.addEventListener('resize',resize);
+setTimeout(()=>{ resize(); setPhase(0); loop(); },80);
 </script>
 </body>
 </html>
