@@ -49,15 +49,42 @@
       background: rgba(255,255,255,.04);
       border: 0.5px solid rgba(160,162,190,.14);
       border-radius: 10px;
-      padding: 18px 20px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      gap: 10px;
       transition: border-color .2s, background .2s;
     }
     .card:hover {
       background: rgba(255,255,255,.065);
       border-color: rgba(160,162,190,.28);
+    }
+
+    /* live iframe thumbnail */
+    .preview-frame {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      background: #0a0a0f;
+      border-bottom: 0.5px solid rgba(160,162,190,.1);
+      flex-shrink: 0;
+      /* height computed by JS */
+    }
+    .preview-frame iframe {
+      width: 800px;
+      height: 500px;
+      border: none;
+      pointer-events: none;
+      display: block;
+      transform-origin: top left;
+      /* transform computed by JS */
+    }
+
+    .card-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
     }
 
     .card-header {
@@ -174,93 +201,118 @@
     <div class="grid">
 
       <div class="card">
-        <div class="card-header">
-          <span class="card-num">00</span>
-          <span class="card-title">Cellular Automaton</span>
+        <div class="preview-frame">
+          <iframe src="00_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
-        <p class="card-desc">
-          Grid-based colony spread across a stellar surface patch. Three sliders let you tune
-          reproduction rate, consumption rate, and energy-seeking bias in real time.
-          Watch the solar output meter drop.
-        </p>
-        <div class="card-tags">
-          <span class="tag">interactive sliders</span>
-          <span class="tag">agent migration</span>
-          <span class="tag">geometric growth</span>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-num">00</span>
+            <span class="card-title">Cellular Automaton</span>
+          </div>
+          <p class="card-desc">
+            Grid-based colony spread across a stellar surface patch. Three sliders let you tune
+            reproduction rate, consumption rate, and energy-seeking bias in real time.
+            Watch the solar output meter drop.
+          </p>
+          <div class="card-tags">
+            <span class="tag">interactive sliders</span>
+            <span class="tag">agent migration</span>
+            <span class="tag">geometric growth</span>
+          </div>
+          <a class="launch" href="00_Astrophage.html">Launch →</a>
         </div>
-        <a class="launch" href="00_Astrophage.html">Launch →</a>
       </div>
 
       <div class="card">
-        <div class="card-header">
-          <span class="card-num">01</span>
-          <span class="card-title">Solar System Map</span>
+        <div class="preview-frame">
+          <iframe src="01_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
-        <p class="card-desc">
-          Top-down system view stepped through four narrative phases — Origin, Migration,
-          Infection, Crisis. The Petrova line appears as a dashed guide. The Sun visibly
-          darkens in the final phases.
-        </p>
-        <div class="card-tags">
-          <span class="tag">4 manual phases</span>
-          <span class="tag">Petrova line</span>
-          <span class="tag">narrative arc</span>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-num">01</span>
+            <span class="card-title">Solar System Map</span>
+          </div>
+          <p class="card-desc">
+            Top-down system view stepped through four narrative phases — Origin, Migration,
+            Infection, Crisis. The Petrova line appears as a dashed guide. The Sun visibly
+            darkens in the final phases.
+          </p>
+          <div class="card-tags">
+            <span class="tag">4 manual phases</span>
+            <span class="tag">Petrova line</span>
+            <span class="tag">narrative arc</span>
+          </div>
+          <a class="launch" href="01_Astrophage.html">Launch →</a>
         </div>
-        <a class="launch" href="01_Astrophage.html">Launch →</a>
       </div>
 
       <div class="card">
-        <div class="card-header">
-          <span class="card-num">02</span>
-          <span class="card-title">Life Cycle Map</span>
+        <div class="preview-frame">
+          <iframe src="02_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
-        <p class="card-desc">
-          The correct round-trip cycle: energize at Sol → migrate to Venus → collect CO₂ →
-          mitosis → return doubled. Amber particles are originals; orange are offspring.
-          Petrova line thickens each cycle.
-        </p>
-        <div class="card-tags">
-          <span class="tag">5 manual phases</span>
-          <span class="tag">colony doubling</span>
-          <span class="tag">bidirectional traffic</span>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-num">02</span>
+            <span class="card-title">Life Cycle Map</span>
+          </div>
+          <p class="card-desc">
+            The correct round-trip cycle: energize at Sol → migrate to Venus → collect CO₂ →
+            mitosis → return doubled. Amber particles are originals; orange are offspring.
+            Petrova line thickens each cycle.
+          </p>
+          <div class="card-tags">
+            <span class="tag">5 manual phases</span>
+            <span class="tag">colony doubling</span>
+            <span class="tag">bidirectional traffic</span>
+          </div>
+          <a class="launch" href="02_Astrophage.html">Launch →</a>
         </div>
-        <a class="launch" href="02_Astrophage.html">Launch →</a>
       </div>
 
       <div class="card">
-        <div class="card-header">
-          <span class="card-num">03</span>
-          <span class="card-title">Continuous Timeline</span>
+        <div class="preview-frame">
+          <iframe src="03_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
-        <p class="card-desc">
-          Automatic playback through all 8 cycles to solar crisis. A timeline bar tracks
-          progress and shifts from green to red. Stats update live — solar output, CO₂,
-          Astrophage colony size, and year.
-        </p>
-        <div class="card-tags">
-          <span class="tag">play / pause / speed</span>
-          <span class="tag">live stats</span>
-          <span class="tag">auto advance</span>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-num">03</span>
+            <span class="card-title">Continuous Timeline</span>
+          </div>
+          <p class="card-desc">
+            Automatic playback through all 8 cycles to solar crisis. A timeline bar tracks
+            progress and shifts from green to red. Stats update live — solar output, CO₂,
+            Astrophage colony size, and year.
+          </p>
+          <div class="card-tags">
+            <span class="tag">play / pause / speed</span>
+            <span class="tag">live stats</span>
+            <span class="tag">auto advance</span>
+          </div>
+          <a class="launch" href="03_Astrophage.html">Launch →</a>
         </div>
-        <a class="launch" href="03_Astrophage.html">Launch →</a>
       </div>
 
       <div class="card">
-        <div class="card-header">
-          <span class="card-num">04</span>
-          <span class="card-title">Orbital Motion</span>
+        <div class="preview-frame">
+          <iframe src="04_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
-        <p class="card-desc">
-          The final version. All four planets orbit at correct relative speeds with fading
-          trails. The Petrova line rotates with Venus — migration streams follow the live
-          Sun→Venus vector as the planet moves.
-        </p>
-        <div class="card-tags">
-          <span class="tag">orbital mechanics</span>
-          <span class="tag">rotating Petrova line</span>
-          <span class="tag">fading trails</span>
+        <div class="card-body">
+          <div class="card-header">
+            <span class="card-num">04</span>
+            <span class="card-title">Orbital Motion</span>
+          </div>
+          <p class="card-desc">
+            The final version. All four planets orbit at correct relative speeds with fading
+            trails. The Petrova line rotates with Venus — migration streams follow the live
+            Sun→Venus vector as the planet moves.
+          </p>
+          <div class="card-tags">
+            <span class="tag">orbital mechanics</span>
+            <span class="tag">rotating Petrova line</span>
+            <span class="tag">fading trails</span>
+          </div>
+          <a class="launch" href="04_Astrophage.html">Launch →</a>
         </div>
-        <a class="launch" href="04_Astrophage.html">Launch →</a>
       </div>
 
     </div>
@@ -283,5 +335,20 @@
       JUST CANVAS + MATH
     </div>
   </div>
+
+  <script>
+    (function () {
+      function scaleFrames() {
+        document.querySelectorAll('.preview-frame').forEach(function (frame) {
+          var scale = frame.offsetWidth / 800;
+          var iframe = frame.querySelector('iframe');
+          iframe.style.transform = 'scale(' + scale + ')';
+          frame.style.height = Math.round(500 * scale) + 'px';
+        });
+      }
+      window.addEventListener('DOMContentLoaded', scaleFrames);
+      window.addEventListener('resize', scaleFrames);
+    })();
+  </script>
 </body>
 </html>
