@@ -126,7 +126,7 @@ function resize() {
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width * devicePixelRatio;
   canvas.height = rect.height * devicePixelRatio;
-  draw();
+  if (energy) draw();
 }
 
 function loop() { if (!running) return; step(); raf = requestAnimationFrame(loop); }
@@ -142,6 +142,9 @@ document.getElementById('btn-reset').addEventListener('click', init);
 
 window.addEventListener('resize', resize);
 setTimeout(() => { resize(); init(); }, 100);
+if (window.self !== window.top) {
+  setTimeout(() => { running = true; loop(); }, 300);
+}
 </script>
 </body>
 </html>

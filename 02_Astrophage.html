@@ -246,6 +246,10 @@ function resize(){
 document.querySelectorAll('.pb').forEach(b=>b.addEventListener('click',()=>setPhase(+b.dataset.p)));
 window.addEventListener('resize',resize);
 setTimeout(()=>{ resize(); setPhase(0); loop(); },80);
+if (window.self !== window.top) {
+  let ap = 0;
+  setInterval(() => { ap = (ap + 1) % 5; setPhase(ap); }, 2500);
+}
 </script>
 </body>
 </html>

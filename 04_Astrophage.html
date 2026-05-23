@@ -438,6 +438,9 @@ function resize() {
 
 window.addEventListener('resize', resize);
 window.addEventListener('load', () => { resize(); loop(); });
+if (window.self !== window.top) {
+  setTimeout(() => { running = true; }, 500);
+}
 </script>
 </body>
 </html>

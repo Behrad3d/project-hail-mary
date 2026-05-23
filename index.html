@@ -32,9 +32,7 @@
       line-height: 1.7;
       max-width: 560px;
     }
-    .hero-sub span {
-      color: #EF9F27;
-    }
+    .hero-sub span { color: #EF9F27; }
 
     .grid {
       display: grid;
@@ -59,6 +57,28 @@
       border-color: rgba(160,162,190,.28);
     }
 
+    /* title row sits above the iframe */
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 14px 20px 12px;
+      border-bottom: 0.5px solid rgba(160,162,190,.08);
+    }
+    .card-num {
+      font-size: 12px;
+      color: #EF9F27;
+      letter-spacing: .1em;
+      opacity: .7;
+      flex-shrink: 0;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #e0e0e8;
+      letter-spacing: .02em;
+    }
+
     /* live iframe thumbnail */
     .preview-frame {
       width: 100%;
@@ -67,7 +87,6 @@
       background: #0a0a0f;
       border-bottom: 0.5px solid rgba(160,162,190,.1);
       flex-shrink: 0;
-      /* height computed by JS */
     }
     .preview-frame iframe {
       width: 800px;
@@ -76,34 +95,14 @@
       pointer-events: none;
       display: block;
       transform-origin: top left;
-      /* transform computed by JS */
     }
 
     .card-body {
-      padding: 18px 20px;
+      padding: 14px 20px 18px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       flex: 1;
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .card-num {
-      font-size: 10px;
-      color: #EF9F27;
-      letter-spacing: .1em;
-      opacity: .7;
-      min-width: 20px;
-    }
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #e0e0e8;
-      letter-spacing: .03em;
     }
 
     .card-desc {
@@ -156,9 +155,7 @@
       padding-top: 1.25rem;
     }
 
-    .video-section {
-      margin-top: 2.5rem;
-    }
+    .video-section { margin-top: 2.5rem; }
     .video-label {
       font-size: 10px;
       color: rgba(160,162,190,.3);
@@ -168,7 +165,7 @@
     .video-wrapper {
       position: relative;
       width: 100%;
-      padding-bottom: 56.25%; /* 16:9 */
+      padding-bottom: 56.25%;
       border-radius: 10px;
       overflow: hidden;
       border: 0.5px solid rgba(160,162,190,.14);
@@ -201,14 +198,14 @@
     <div class="grid">
 
       <div class="card">
+        <div class="card-header">
+          <span class="card-num">00</span>
+          <span class="card-title">Cellular Automaton</span>
+        </div>
         <div class="preview-frame">
           <iframe src="00_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
         <div class="card-body">
-          <div class="card-header">
-            <span class="card-num">00</span>
-            <span class="card-title">Cellular Automaton</span>
-          </div>
           <p class="card-desc">
             Grid-based colony spread across a stellar surface patch. Three sliders let you tune
             reproduction rate, consumption rate, and energy-seeking bias in real time.
@@ -224,14 +221,14 @@
       </div>
 
       <div class="card">
+        <div class="card-header">
+          <span class="card-num">01</span>
+          <span class="card-title">Solar System Map</span>
+        </div>
         <div class="preview-frame">
           <iframe src="01_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
         <div class="card-body">
-          <div class="card-header">
-            <span class="card-num">01</span>
-            <span class="card-title">Solar System Map</span>
-          </div>
           <p class="card-desc">
             Top-down system view stepped through four narrative phases — Origin, Migration,
             Infection, Crisis. The Petrova line appears as a dashed guide. The Sun visibly
@@ -247,14 +244,14 @@
       </div>
 
       <div class="card">
+        <div class="card-header">
+          <span class="card-num">02</span>
+          <span class="card-title">Life Cycle Map</span>
+        </div>
         <div class="preview-frame">
           <iframe src="02_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
         <div class="card-body">
-          <div class="card-header">
-            <span class="card-num">02</span>
-            <span class="card-title">Life Cycle Map</span>
-          </div>
           <p class="card-desc">
             The correct round-trip cycle: energize at Sol → migrate to Venus → collect CO₂ →
             mitosis → return doubled. Amber particles are originals; orange are offspring.
@@ -270,14 +267,14 @@
       </div>
 
       <div class="card">
+        <div class="card-header">
+          <span class="card-num">03</span>
+          <span class="card-title">Continuous Timeline</span>
+        </div>
         <div class="preview-frame">
           <iframe src="03_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
         <div class="card-body">
-          <div class="card-header">
-            <span class="card-num">03</span>
-            <span class="card-title">Continuous Timeline</span>
-          </div>
           <p class="card-desc">
             Automatic playback through all 8 cycles to solar crisis. A timeline bar tracks
             progress and shifts from green to red. Stats update live — solar output, CO₂,
@@ -293,14 +290,14 @@
       </div>
 
       <div class="card">
+        <div class="card-header">
+          <span class="card-num">04</span>
+          <span class="card-title">Orbital Motion</span>
+        </div>
         <div class="preview-frame">
           <iframe src="04_Astrophage.html" loading="lazy" scrolling="no" tabindex="-1" title="Preview"></iframe>
         </div>
         <div class="card-body">
-          <div class="card-header">
-            <span class="card-num">04</span>
-            <span class="card-title">Orbital Motion</span>
-          </div>
           <p class="card-desc">
             The final version. All four planets orbit at correct relative speeds with fading
             trails. The Petrova line rotates with Venus — migration streams follow the live
