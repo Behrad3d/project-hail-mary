@@ -1,0 +1,399 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrophage Traversal Map</title>
+
+
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f14; color: #e0e0e8; font-family: monospace; display: flex; justify-content: center; padding: 2rem 1rem; min-height: 100vh; }
+  .container { width: 100%; max-width: 780px; }
+  h1 { font-size: 13px; color: rgba(160,162,190,.5); font-weight: 400; margin-bottom: 1.5rem; letter-spacing: .08em; }
+
+  .phase-bar { display: flex; border: 0.5px solid rgba(160,162,190,.2); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .pb { flex: 1; background: transparent; color: rgba(180,182,210,.55); font-family: monospace; font-size: 11px; border: none; padding: 10px 4px; cursor: pointer; border-right: 0.5px solid rgba(160,162,190,.2); transition: background .15s, color .15s; }
+  .pb:last-child { border-right: none; }
+  .pb.active { background: rgba(255,255,255,.07); color: #e0e0e8; font-weight: 600; }
+  .pb:hover:not(.active) { background: rgba(255,255,255,.04); color: rgba(200,202,225,.8); }
+
+  canvas { display: block; width: 100%; height: 360px; border-radius: 8px; border: 0.5px solid rgba(160,162,190,.18); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .stat-card { background: rgba(255,255,255,.05); border-radius: 8px; padding: 10px 12px; border: 0.5px solid rgba(160,162,190,.12); }
+  .stat-label { font-size: 10px; color: rgba(160,162,190,.5); margin-bottom: 4px; letter-spacing: .06em; }
+  .stat-val { font-size: 20px; font-weight: 500; color: #e0e0e8; transition: color .3s; }
+
+  .log { margin-top: 10px; padding: 12px 14px; background: rgba(255,255,255,.04); border-left: 2px solid #EF9F27; font-size: 12px; color: rgba(190,192,215,.7); line-height: 1.8; }
+</style>
+</head>
+<body>
+<h2 class="sr-only">Astrophage life cycle timeline with orbital motion — planets orbit the Sun at correct relative speeds while astrophage cycle between Sol and Venus, doubling each cycle</h2>
+<div style="padding:1rem 0;">
+<canvas id="sc"></canvas>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;">
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;">
+    <div style="font-size:10px;color:var(--color-text-tertiary);font-family:monospace;margin-bottom:3px;">SOLAR OUTPUT</div>
+    <div id="st-sol" style="font-size:20px;font-weight:500;color:var(--color-text-primary);">100%</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;">
+    <div style="font-size:10px;color:var(--color-text-tertiary);font-family:monospace;margin-bottom:3px;">VENUS CO₂</div>
+    <div id="st-co2" style="font-size:20px;font-weight:500;color:var(--color-text-primary);">96%</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;">
+    <div style="font-size:10px;color:var(--color-text-tertiary);font-family:monospace;margin-bottom:3px;">COLONY SIZE</div>
+    <div id="st-col" style="font-size:20px;font-weight:500;color:var(--color-text-primary);">6</div>
+  </div>
+  <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;">
+    <div style="font-size:10px;color:var(--color-text-tertiary);font-family:monospace;margin-bottom:3px;">YEAR</div>
+    <div id="st-yr" style="font-size:20px;font-weight:500;color:var(--color-text-primary);">yr 1</div>
+  </div>
+</div>
+<div style="display:flex;gap:8px;margin-top:10px;">
+  <button class="cb" id="btn-pp" style="flex:2;">▶ play</button>
+  <button class="cb" id="btn-reset" style="flex:1;">↺ reset</button>
+  <button class="cb" id="btn-spd" style="flex:1;">speed: 1×</button>
+</div>
+<div id="pdesc" style="margin-top:10px;padding:12px 14px;background:var(--color-background-secondary);border-radius:0;border-left:2px solid #EF9F27;font-size:12px;color:var(--color-text-secondary);font-family:monospace;line-height:1.75;min-height:42px;"></div>
+</div>
+
+<script>
+const cv=document.getElementById('sc');
+const g=cv.getContext('2d');
+const VW=680,VH=320,SX=300,SY=155;
+
+const SD=[65,80,65,80]; // stage durations: energize,outbound,breed,inbound
+const MC=8,TC=290,TT=TC*MC; // 8 cycles, 290 ticks/cycle, 2320 total
+
+let gt=0,spd=1,running=false;
+const sr=s=>{const v=Math.sin(s*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+const lp=(a,b,t)=>a+(b-a)*Math.max(0,Math.min(1,t));
+const cl=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const visN=ci=>Math.min(70,6*Math.pow(2,ci));
+const realN=ci=>6*Math.pow(2,ci);
+
+// Orbital speeds (rad/tick). Earth does ~3 full orbits over TT ticks.
+// Relative to real periods: Mercury=0.24yr, Venus=0.615yr, Earth=1yr, Mars=1.87yr
+const EARTH_SPD = (3*2*Math.PI)/TT; // ~0.0081
+const PL=[
+  {id:'mercury',or:54, sa:1.2,    spd:EARTH_SPD/0.24, r:3.2, col:'#B4B2A9', lbl:'mercury'},
+  {id:'venus',  or:87, sa:Math.PI, spd:EARTH_SPD/0.615,r:5.5, col:'#FAC775', lbl:'venus'},
+  {id:'earth',  or:130,sa:-0.785, spd:EARTH_SPD,       r:6.5, col:'#85B7EB', lbl:'earth'},
+  {id:'mars',   or:172,sa:2.5,    spd:EARTH_SPD/1.87,  r:4.8, col:'#F0997B', lbl:'mars'},
+];
+
+// Get planet x,y at a given tick
+function ppos(pl,t){
+  const a=pl.sa+t*pl.spd;
+  return{x:SX+Math.cos(a)*pl.or, y:SY+Math.sin(a)*pl.or, a};
+}
+// Venus is index 1 — call this frequently
+function vp(t){return ppos(PL[1],t);}
+
+const STARS=Array.from({length:150},(_,i)=>({x:sr(i)*VW,y:sr(i+50)*VH,r:.5+sr(i+100)*.9,a:.18+sr(i+200)*.45}));
+const ISPOT=Array.from({length:16},(_,i)=>({a0:(i/16)*Math.PI*2+.4,fr:4+sr(i)*12,sz:1.3+sr(i+50)*2.2,sp:.002+sr(i+80)*.004}));
+
+function getState(){
+  const done=gt>=TT;
+  const t=Math.min(gt,TT-1);
+  const ci=Math.floor(t/TC);
+  let st=t%TC,si=0;
+  for(let s=0;s<4;s++){if(st<SD[s]){si=s;break;}st-=SD[s];}
+  return{ci,si,sp:st/SD[si],done};
+}
+
+// Perpendicular unit vector to the Sun→Venus line
+function perp(v){
+  const dx=v.x-SX,dy=v.y-SY,dl=Math.sqrt(dx*dx+dy*dy);
+  return{nx:-dy/dl,ny:dx/dl};
+}
+
+// ── DRAW BACKGROUND ───────────────────────────────────────────────────────────
+function dBg(){
+  g.fillStyle='#040710';g.fillRect(0,0,VW,VH);
+  STARS.forEach(s=>{g.beginPath();g.arc(s.x,s.y,s.r,0,Math.PI*2);g.fillStyle=`rgba(200,205,235,${s.a})`;g.fill();});
+}
+
+// ── DRAW SUN ──────────────────────────────────────────────────────────────────
+function dSun({ci,si,sp}){
+  const inf=cl((ci*2.8+(si>=2?sp*.9:0))/22,0,1);
+  for(let gr=52;gr>22;gr-=5){
+    g.beginPath();g.arc(SX,SY,gr,0,Math.PI*2);
+    g.fillStyle=`rgba(255,148,28,${.054*(1-inf*.65)*(1-(gr-22)/32)})`;g.fill();
+  }
+  const rc=Math.floor(lp(255,112,inf)),gc=Math.floor(lp(178,52,inf)),bc=Math.floor(lp(38,12,inf));
+  g.beginPath();g.arc(SX,SY,22,0,Math.PI*2);g.fillStyle=`rgb(${rc},${gc},${bc})`;g.fill();
+  if(inf>.04) ISPOT.forEach((ip,i)=>{
+    const al=cl((inf-i*.055)*4,0,1);if(!al)return;
+    const sa=ip.a0+gt*ip.sp;
+    g.beginPath();g.arc(SX+Math.cos(sa)*Math.min(ip.fr,16)*.56,SY+Math.sin(sa)*Math.min(ip.fr,16)*.56,ip.sz*al,0,Math.PI*2);
+    g.fillStyle=`rgba(45,15,0,${.9*al})`;g.fill();
+  });
+  g.font='9px monospace';g.textAlign='center';g.fillStyle='rgba(255,175,55,.6)';g.fillText('SOL',SX,SY+33);
+}
+
+// ── DRAW PLANETS + ORBITS ─────────────────────────────────────────────────────
+function dPlanets({si,sp}){
+  // Orbit rings
+  PL.forEach(p=>{
+    g.beginPath();g.arc(SX,SY,p.or,0,Math.PI*2);
+    g.strokeStyle='rgba(155,160,200,.11)';g.lineWidth=.6;g.stroke();
+  });
+
+  // Draw each planet with trail
+  PL.forEach(p=>{
+    const pos=ppos(p,gt);
+
+    // Orbital trail — past positions from the orbit formula
+    for(let i=5;i>=1;i--){
+      const past=ppos(p,gt-i*15);
+      g.beginPath();g.arc(past.x,past.y,p.r*.55,0,Math.PI*2);
+      g.fillStyle=p.col+(Math.floor((6-i)*7).toString(16).padStart(2,'0'));
+      g.fill();
+    }
+
+    // Venus breed glow
+    if(p.id==='venus'&&si===2){
+      const pu=Math.sin(gt*.15)*.5+.5;
+      g.beginPath();g.arc(pos.x,pos.y,14+pu*5,0,Math.PI*2);
+      g.strokeStyle=`rgba(250,199,117,${.1+pu*.1})`;g.lineWidth=1.5;g.stroke();
+      if(sp>.47&&sp<.59){
+        const fi=1-Math.abs(sp-.53)/.06;
+        g.beginPath();g.arc(pos.x,pos.y,20+fi*8,0,Math.PI*2);
+        g.strokeStyle=`rgba(255,235,140,${fi*.65})`;g.lineWidth=2.5;g.stroke();
+        g.font=`500 ${Math.floor(10+fi*5)}px monospace`;
+        g.fillStyle=`rgba(255,225,100,${fi*.9})`;g.textAlign='center';
+        g.fillText('× 2',pos.x,pos.y-24);
+      }
+    }
+
+    // Planet dot
+    g.beginPath();g.arc(pos.x,pos.y,p.r,0,Math.PI*2);g.fillStyle=p.col;g.fill();
+
+    // Label — offset outward from Sun
+    const dx=pos.x-SX,dy=pos.y-SY,dl=Math.sqrt(dx*dx+dy*dy)||1;
+    const lx=pos.x+(dx/dl)*(p.r+5), ly=pos.y+(dy/dl)*(p.r+5)+3;
+    g.font='9px monospace';g.fillStyle='rgba(185,190,215,.6)';g.textAlign='center';
+    g.fillText(p.lbl,pos.x,pos.y-p.r-6);
+  });
+}
+
+// ── DRAW PETROVA LINE ─────────────────────────────────────────────────────────
+function dPetrova({ci,si},venus){
+  const thick=.5+ci*.6;
+  const ba=cl(.05+ci*.023,0,.42);
+  const isAct=si===1||si===3;
+
+  // Base line — Sun to current Venus position (rotates as Venus orbits)
+  g.beginPath();g.moveTo(venus.x,venus.y);g.lineTo(SX,SY);
+  g.strokeStyle=`rgba(250,199,117,${ba})`;g.lineWidth=thick;g.stroke();
+
+  if(isAct){
+    const aa=cl(.18+ci*.03,0,.58);
+    g.strokeStyle=`rgba(250,199,117,${aa})`;
+    g.lineWidth=thick+2;
+    g.setLineDash([5,9]);
+    g.lineDashOffset=si===1?(gt*.55%14):-(gt*.55%14);
+    g.stroke();g.setLineDash([]);g.lineDashOffset=0;
+    // Label at midpoint of line
+    const mx=(SX+venus.x)/2, my=(SY+venus.y)/2;
+    g.font='8px monospace';g.fillStyle=`rgba(250,199,117,${aa})`;g.textAlign='center';
+    g.fillText('petrova line  0.92c',mx,my-11);
+  }
+}
+
+// ── DRAW PARTICLES ────────────────────────────────────────────────────────────
+function dParts({ci,si,sp},venus){
+  const n=visN(ci);
+  const A='rgba(250,200,118,', B='rgba(239,159,39,';
+  const pn=perp(venus); // perpendicular to current Sun-Venus vector
+
+  // Energize: orbit sun
+  if(si===0){
+    for(let i=0;i<n;i++){
+      const a=(i/n)*Math.PI*2+gt*(.008+sr(i)*.005);
+      const r=22+sr(i)*10;
+      g.beginPath();g.arc(SX+Math.cos(a)*r,SY+Math.sin(a)*r,1.8,0,Math.PI*2);
+      g.fillStyle=A+'.8)';g.fill();
+    }
+  }
+
+  // Outbound: Sun → Venus (along Petrova line, spread perpendicular)
+  else if(si===1){
+    for(let i=0;i<n;i++){
+      const dep=sr(i)*.38, off=(sr(i+100)*2-1)*12;
+      if(sp<dep){
+        // Still orbiting sun
+        const a=(i/n)*Math.PI*2+gt*(.008+sr(i)*.005);
+        const r=22+sr(i)*10;
+        g.beginPath();g.arc(SX+Math.cos(a)*r,SY+Math.sin(a)*r,1.8,0,Math.PI*2);
+        g.fillStyle=A+'.7)';g.fill();
+      } else {
+        const tp=cl((sp-dep)/(1-dep*.6),0,1);
+        // Path follows current Sun→Venus direction with perpendicular spread
+        const px=lp(SX,venus.x,tp)+pn.nx*off*Math.sin(tp*Math.PI);
+        const py=lp(SY,venus.y,tp)+pn.ny*off*Math.sin(tp*Math.PI);
+        g.beginPath();g.arc(px,py,1.8,0,Math.PI*2);
+        g.fillStyle=`${A}${.3+tp*.6})`;g.fill();
+      }
+    }
+  }
+
+  // Breed: orbit Venus, children split at sp>0.52
+  else if(si===2){
+    for(let i=0;i<n;i++){
+      const a=(i/n)*Math.PI*2+gt*(.012+sr(i)*.008);
+      const r=6+sr(i)*9;
+      const px=venus.x+Math.cos(a)*r, py=venus.y+Math.sin(a)*r;
+      g.beginPath();g.arc(px,py,1.8,0,Math.PI*2);g.fillStyle=A+'.85)';g.fill();
+      if(sp>.52){
+        const fp=(sp-.52)/.48;
+        const ca=a+fp*1.4, cr=r+fp*5;
+        g.beginPath();g.arc(venus.x+Math.cos(ca)*cr,venus.y+Math.sin(ca)*cr,fp*1.8,0,Math.PI*2);
+        g.fillStyle=`${B}${.4+fp*.45})`;g.fill();
+      }
+    }
+  }
+
+  // Inbound: doubled colony Venus → Sun
+  else if(si===3){
+    const rn=Math.min(70,n*2);
+    for(let i=0;i<rn;i++){
+      const isC=i>=n, bi=isC?i-n:i;
+      const dep=sr(bi+(isC?200:0))*.38, off=(sr(i+300)*2-1)*12;
+      if(sp<dep){
+        // Still on Venus
+        const a=(i/rn)*Math.PI*2+gt*(.012+sr(i)*.008);
+        const r=6+sr(i)*9;
+        g.beginPath();g.arc(venus.x+Math.cos(a)*r,venus.y+Math.sin(a)*r,1.8,0,Math.PI*2);
+        g.fillStyle=(isC?B:A)+'.85)';g.fill();
+      } else {
+        const tp=cl((sp-dep)/(1-dep*.6),0,1);
+        const px=lp(venus.x,SX,tp)+pn.nx*off*Math.sin(tp*Math.PI);
+        const py=lp(venus.y,SY,tp)+pn.ny*off*Math.sin(tp*Math.PI);
+        g.beginPath();g.arc(px,py,1.8,0,Math.PI*2);
+        g.fillStyle=`${isC?B:A}${.3+tp*.6})`;g.fill();
+      }
+    }
+  }
+}
+
+// ── TIMELINE BAR ──────────────────────────────────────────────────────────────
+function dTimeline(){
+  const prog=Math.min(1,gt/TT);
+  const bx=12,by=299,bw=656,bh=5;
+  g.fillStyle='rgba(155,158,188,.1)';g.fillRect(bx,by,bw,bh);
+  const tc=prog<.3?'#5DCAA5':prog<.6?'#FAC775':prog<.82?'#EF9F27':'#E24B4A';
+  g.fillStyle=tc;g.fillRect(bx,by,bw*prog,bh);
+  g.fillStyle=tc;g.fillRect(bx+bw*prog-1,by-2,2,bh+2);
+  for(let c=1;c<MC;c++){
+    const x=bx+bw*(c/MC);
+    g.fillStyle='rgba(155,158,188,.25)';g.fillRect(x-.5,by-3,1,bh+3);
+    g.font='8px monospace';g.fillStyle='rgba(155,158,188,.3)';g.textAlign='center';
+    g.fillText('c'+(c+1),x,by-5);
+  }
+}
+
+// ── HUD ───────────────────────────────────────────────────────────────────────
+function dHud({ci,si,done}){
+  const SL=['ENERGIZING','MIGRATING →','BREEDING','← RETURNING'];
+  const label=done?'CRISIS — HAIL MARY AUTHORIZED':'CYCLE '+(ci+1)+' / '+MC+'  ·  '+SL[si];
+  g.font='500 9px monospace';
+  g.fillStyle=done?'rgba(226,75,74,.55)':'rgba(155,158,188,.38)';
+  g.textAlign='left';g.fillText(label,12,16);
+}
+
+// ── CRISIS ────────────────────────────────────────────────────────────────────
+function dCrisis(){
+  g.fillStyle='rgba(226,75,74,.08)';g.fillRect(0,0,VW,VH);
+  g.font='500 13px monospace';g.fillStyle='rgba(226,75,74,.75)';
+  g.textAlign='center';g.fillText('CRISIS — HAIL MARY PROTOCOL AUTHORIZED',VW/2,VH/2-9);
+  g.font='10px monospace';g.fillStyle='rgba(226,75,74,.5)';
+  g.fillText('click ↺ reset to replay',VW/2,VH/2+12);
+}
+
+// ── DOM UPDATE ────────────────────────────────────────────────────────────────
+function updateDom({ci,si,sp,done}){
+  const sol=Math.round(Math.max(72,100-ci*2.8-(si>=2?sp*.9:0)));
+  const co2=Math.round(Math.max(4,96-ci*10.5-(si===2?sp*10.5:si>=3?10.5:0)));
+  const cn=realN(si>=3?ci+1:ci);
+  const yr=Math.floor((gt/TT)*28)+1;
+
+  const sEl=document.getElementById('st-sol');
+  sEl.textContent=sol+'%';
+  sEl.style.color=sol<85?'#E24B4A':sol<95?'#EF9F27':'var(--color-text-primary)';
+  document.getElementById('st-co2').textContent=co2+'%';
+  const cEl=document.getElementById('st-col');
+  cEl.textContent=cn>=1000?Math.round(cn/100)/10+'k':cn;
+  cEl.style.color=cn>100?'#EF9F27':cn>400?'#E24B4A':'var(--color-text-primary)';
+  const yEl=document.getElementById('st-yr');
+  yEl.textContent='yr '+yr;
+  yEl.style.color=yr>20?'#E24B4A':yr>12?'#EF9F27':'var(--color-text-primary)';
+
+  const descs=[
+    `Cycle ${ci+1} — astrophage energizing at Sol. Absorbing stellar radiation until energy stores are full. Magnetic field lines funnel them to the solar north pole — the only place Venus's CO₂ signature at 4.26μm is visible.`,
+    `Migrating to Venus at 0.92c. The Petrova line tracks Venus's orbital position in real time. Colony locked onto the CO₂ spectral signature regardless of where Venus currently sits in its orbit.`,
+    sp<.52
+      ?`Arrived at Venus upper atmosphere. Collecting CO₂ to synthesize proteins and DNA. Pre-mitosis.`
+      :`MITOSIS — each cell dividing into two. Parent and child will both return to Sol. Colony now ${cn}.`,
+    `Returning to Sol — ${Math.min(70,visN(ci)*2)} particles en route vs ${visN(ci)} that departed. Petrova line at peak width. Cycle ${ci+2} begins on arrival.`
+  ];
+  document.getElementById('pdesc').textContent=done
+    ?`CRISIS — ${MC} cycles complete. Solar output at 72%. Venus CO₂ depleted at 4%. Colony is ${realN(MC)}× original. The same pattern is active at every nearby star. That is why Tau Ceti is the only hope.`
+    :descs[si];
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────────────────────
+function loop(){
+  if(running&&gt<TT) gt=Math.min(TT,gt+spd);
+  if(gt>=TT&&running){running=false;document.getElementById('btn-pp').textContent='▶ play';}
+
+  const s=getState();
+  const venus=vp(gt); // Venus position at current tick
+
+  const dpr=devicePixelRatio||1;
+  const cw=cv.width/dpr, ch=cv.height/dpr;
+  g.save();g.scale(dpr*(cw/VW),dpr*(ch/VH));
+
+  dBg();
+  dSun(s);
+  dPlanets(s);        // planets move via orbital formula
+  dPetrova(s,venus);  // Petrova line tracks Venus
+  dParts(s,venus);    // astrophage target Venus
+  dTimeline();
+  dHud(s);
+  if(s.done) dCrisis();
+
+  g.restore();
+  updateDom(s);
+  requestAnimationFrame(loop);
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-pp').addEventListener('click',()=>{
+  if(gt>=TT) gt=0;
+  running=!running;
+  document.getElementById('btn-pp').textContent=running?'⏸ pause':'▶ play';
+});
+document.getElementById('btn-reset').addEventListener('click',()=>{
+  gt=0;running=false;
+  document.getElementById('btn-pp').textContent='▶ play';
+});
+const SPEEDS=[1,2,4];let si2=0;
+document.getElementById('btn-spd').addEventListener('click',()=>{
+  si2=(si2+1)%3;spd=SPEEDS[si2];
+  document.getElementById('btn-spd').textContent='speed: '+spd+'×';
+});
+
+function resize(){
+  const dpr=devicePixelRatio||1,r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr;cv.height=r.height*dpr;
+}
+window.addEventListener('resize',resize);
+setTimeout(()=>{resize();loop();},80);
+</script>
+</body>
+</html>

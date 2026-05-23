@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrophage Cellular Automaton</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f14; color: #e0e0e8; font-family: monospace; display: flex; justify-content: center; padding: 2rem 1rem; min-height: 100vh; }
+  .container { width: 100%; max-width: 780px; }
+  h1 { font-size: 13px; color: rgba(160,162,190,.5); font-weight: 400; margin-bottom: 1.5rem; letter-spacing: .08em; }
+
+  canvas { display: block; width: 100%; height: 360px; border-radius: 8px; border: 0.5px solid rgba(160,162,190,.18); }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
+  .stat-card { background: rgba(255,255,255,.05); border-radius: 8px; padding: 10px 12px; border: 0.5px solid rgba(160,162,190,.12); }
+  .stat-label { font-size: 10px; color: rgba(160,162,190,.5); margin-bottom: 4px; letter-spacing: .06em; }
+  .stat-val { font-size: 20px; font-weight: 500; color: #e0e0e8; transition: color .3s; }
+
+  .log { margin-top: 10px; padding: 12px 14px; background: rgba(255,255,255,.04); border-left: 2px solid #EF9F27; font-size: 12px; color: rgba(190,192,215,.7); line-height: 1.8; display: grid; gap: 10px; }
+  .ctrl-row { display: flex; align-items: center; gap: 12px; }
+  .ctrl-label { font-size: 10px; color: rgba(160,162,190,.5); width: 140px; letter-spacing: .06em; }
+  .ctrl-val { font-size: 13px; font-weight: 500; color: #e0e0e8; min-width: 20px; }
+  input[type="range"] { flex: 1; accent-color: #EF9F27; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; }
+  .btn { flex: 1; background: rgba(255,255,255,.04); border: 0.5px solid rgba(160,162,190,.2); border-radius: 6px; color: rgba(180,182,210,.7); font-family: monospace; font-size: 12px; padding: 9px 4px; cursor: pointer; transition: background .15s, color .15s; }
+  .btn:hover { background: rgba(255,255,255,.09); color: #e0e0e8; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ASTROPHAGE CELLULAR AUTOMATON — PROJECT HAIL MARY</h1>
+
+  <canvas id="sim"></canvas>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">SOLAR OUTPUT</div><div class="stat-val" id="output-val">100%</div></div>
+    <div class="stat-card"><div class="stat-label">COVERAGE</div><div class="stat-val" id="coverage-val">0%</div></div>
+    <div class="stat-card"><div class="stat-label">TICK</div><div class="stat-val" id="tick-val">0</div></div>
+  </div>
+
+  <div class="log">
+    <div class="ctrl-row">
+      <span class="ctrl-label">REPRODUCTION RATE</span>
+      <input type="range" min="1" max="10" value="4" step="1" id="repro">
+      <span class="ctrl-val" id="repro-out">4</span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">CONSUMPTION RATE</span>
+      <input type="range" min="1" max="10" value="3" step="1" id="consume">
+      <span class="ctrl-val" id="consume-out">3</span>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">ENERGY BIAS</span>
+      <input type="range" min="0" max="10" value="6" step="1" id="bias">
+      <span class="ctrl-val" id="bias-out">6</span>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="btn-run">run</button>
+    <button class="btn" id="btn-pause">pause</button>
+    <button class="btn" id="btn-reset">reset</button>
+  </div>
+</div>
+
+<script>
+const GRID = 80;
+const canvas = document.getElementById('sim');
+const ctx = canvas.getContext('2d');
+let energy, density, tick, running, raf;
+
+function init() {
+  energy = new Float32Array(GRID * GRID).fill(1.0);
+  density = new Float32Array(GRID * GRID).fill(0);
+  tick = 0; running = false;
+  if (raf) cancelAnimationFrame(raf);
+  const cx = Math.floor(GRID / 2), cy = Math.floor(GRID / 2);
+  for (let dy = -1; dy <= 1; dy++)
+    for (let dx = -1; dx <= 1; dx++)
+      density[(cy + dy) * GRID + (cx + dx)] = 0.8;
+  updateStats(); draw();
+}
+
+function idx(x, y) { return y * GRID + x; }
+
+function step() {
+  const rr = parseInt(document.getElementById('repro').value) / 50;
+  const cr = parseInt(document.getElementById('consume').value) / 40;
+  const bias = parseInt(document.getElementById('bias').value) / 10;
+  const nd = new Float32Array(density);
+  const ne = new Float32Array(energy);
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      const i = idx(x, y);
+      if (density[i] < 0.01) continue;
+      ne[i] = Math.max(0, energy[i] - density[i] * cr);
+      nd[i] = Math.min(1, density[i] + density[i] * rr * energy[i]);
+      for (const [dx, dy] of dirs) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || nx >= GRID || ny < 0 || ny >= GRID) continue;
+        const ni = idx(nx, ny);
+        const migProb = rr * density[i] * (bias * energy[ni] + (1 - bias) * 0.5);
+        if (Math.random() < migProb) nd[ni] = Math.min(1, nd[ni] + density[i] * 0.15);
+      }
+    }
+  }
+  density.set(nd); energy.set(ne); tick++;
+  updateStats(); draw();
+}
+
+function updateStats() {
+  let totalEnergy = 0, covered = 0;
+  for (let i = 0; i < GRID * GRID; i++) {
+    totalEnergy += energy[i];
+    if (density[i] > 0.05) covered++;
+  }
+  const maxEnergy = GRID * GRID;
+  document.getElementById('output-val').textContent = Math.round(totalEnergy / maxEnergy * 100) + '%';
+  document.getElementById('coverage-val').textContent = Math.round(covered / maxEnergy * 100) + '%';
+  document.getElementById('tick-val').textContent = tick;
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  const cw = W / GRID, ch = H / GRID;
+  ctx.fillStyle = '#1a1a18';
+  ctx.fillRect(0, 0, W, H);
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      const i = idx(x, y);
+      const e = energy[i], d = density[i];
+      if (d < 0.01) {
+        const brightness = Math.floor(e * 60 + 20);
+        ctx.fillStyle = `rgb(${brightness+10},${brightness},${Math.floor(brightness*0.7)})`;
+      } else {
+        const r = Math.floor(180 + d * 55), g = Math.floor(60 + d * 30), b = Math.floor(10 + d * 10);
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+      }
+      ctx.fillRect(Math.floor(x * cw), Math.floor(y * ch), Math.ceil(cw), Math.ceil(ch));
+    }
+  }
+}
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+  draw();
+}
+
+function loop() { if (!running) return; step(); raf = requestAnimationFrame(loop); }
+
+['repro','consume','bias'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => document.getElementById(id+'-out').textContent = el.value);
+});
+
+document.getElementById('btn-run').addEventListener('click', () => { if (!running) { running = true; loop(); } });
+document.getElementById('btn-pause').addEventListener('click', () => { running = false; });
+document.getElementById('btn-reset').addEventListener('click', init);
+
+window.addEventListener('resize', resize);
+setTimeout(() => { resize(); init(); }, 100);
+</script>
+</body>
+</html>

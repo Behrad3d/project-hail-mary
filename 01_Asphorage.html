@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astrophage Traversal Map</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0f0f14; color: #e0e0e8; font-family: monospace; display: flex; justify-content: center; padding: 2rem 1rem; min-height: 100vh; }
+  .container { width: 100%; max-width: 780px; }
+  h1 { font-size: 13px; color: rgba(160,162,190,.5); font-weight: 400; margin-bottom: 1.5rem; letter-spacing: .08em; }
+
+  .phase-bar { display: flex; border: 0.5px solid rgba(160,162,190,.2); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .pb { flex: 1; background: transparent; color: rgba(180,182,210,.55); font-family: monospace; font-size: 11px; border: none; padding: 10px 4px; cursor: pointer; border-right: 0.5px solid rgba(160,162,190,.2); transition: background .15s, color .15s; }
+  .pb:last-child { border-right: none; }
+  .pb.active { background: rgba(255,255,255,.07); color: #e0e0e8; font-weight: 600; }
+  .pb:hover:not(.active) { background: rgba(255,255,255,.04); color: rgba(200,202,225,.8); }
+
+  canvas { display: block; width: 100%; height: 360px; border-radius: 8px; border: 0.5px solid rgba(160,162,190,.18); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .stat-card { background: rgba(255,255,255,.05); border-radius: 8px; padding: 10px 12px; border: 0.5px solid rgba(160,162,190,.12); }
+  .stat-label { font-size: 10px; color: rgba(160,162,190,.5); margin-bottom: 4px; letter-spacing: .06em; }
+  .stat-val { font-size: 20px; font-weight: 500; color: #e0e0e8; transition: color .3s; }
+
+  .log { margin-top: 10px; padding: 12px 14px; background: rgba(255,255,255,.04); border-left: 2px solid #EF9F27; font-size: 12px; color: rgba(190,192,215,.7); line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ASTROPHAGE TRAVERSAL MAP — PROJECT HAIL MARY</h1>
+
+  <div class="phase-bar">
+    <button class="pb active" data-p="0">01 — origin</button>
+    <button class="pb" data-p="1">02 — migration</button>
+    <button class="pb" data-p="2">03 — infection</button>
+    <button class="pb" data-p="3">04 — crisis</button>
+  </div>
+
+  <canvas id="sc"></canvas>
+
+  <div class="stats">
+    <div class="stat-card"><div class="stat-label">SOLAR OUTPUT</div><div class="stat-val" id="st-sol">100%</div></div>
+    <div class="stat-card"><div class="stat-label">VENUS CO₂</div><div class="stat-val" id="st-co2">100%</div></div>
+    <div class="stat-card"><div class="stat-label">COLONY SIZE</div><div class="stat-val" id="st-col">—</div></div>
+    <div class="stat-card"><div class="stat-label">THREAT LEVEL</div><div class="stat-val" id="st-thr">NONE</div></div>
+  </div>
+
+  <div class="log" id="pdesc"></div>
+</div>
+
+<script>
+const cv = document.getElementById('sc');
+const g = cv.getContext('2d');
+let phase=0, tick=0, parts=[];
+
+const SX=298, SY=168;
+const sr=s=>{const v=Math.sin(s*127.1+311.7)*43758.5453;return v-Math.floor(v);};
+const STARS=Array.from({length:160},(_,i)=>({x:sr(i)*680,y:sr(i+50)*340,r:.5+sr(i+100)*.9,a:.2+sr(i+200)*.5}));
+const ISPOT=Array.from({length:18},(_,i)=>({a0:(i/18)*Math.PI*2+.4,fr:4+sr(i)*12,sz:1.3+sr(i+50)*2.2,sp:.002+sr(i+80)*.004}));
+const lerp=(a,b,t)=>a+(b-a)*Math.max(0,Math.min(1,t));
+
+const PL=[
+  {id:'mercury',or:54,an:1.2,r:3.2,col:'#B4B2A9',lbl:'mercury'},
+  {id:'venus',  or:87,an:Math.PI,r:5.5,col:'#FAC775',lbl:'venus'},
+  {id:'earth',  or:130,an:-.785,r:6.5,col:'#85B7EB',lbl:'earth'},
+  {id:'mars',   or:172,an:2.5,r:4.8,col:'#F0997B',lbl:'mars'}
+];
+const VP={x:SX+Math.cos(Math.PI)*87, y:SY};
+const EP={x:SX+Math.cos(-.785)*130, y:SY+Math.sin(-.785)*130};
+
+const PDATA=[
+  {sol:100,co2:100,col:'~10⁶',  thr:'NONE',    tc:'#e0e0e8',
+   desc:'LOG 001 — Astrophage first detected in Venusian upper atmosphere. Feed vector: CO₂. Energy source: solar radiation. Self-sustaining colony present. Migration velocity: zero. No threat to Sol at this time.'},
+  {sol:99, co2:78, col:'~10¹²', thr:'MONITOR',  tc:'#EF9F27',
+   desc:'LOG 047 — Mass migration event confirmed. Colony tracking inward along radiation gradient. Venus CO₂ depleting at 2.3% per day. Astrophage responding to higher-energy radiation source. Estimated Sol contact: 14 months.'},
+  {sol:93, co2:22, col:'~10¹⁸', thr:'CRITICAL', tc:'#D85A30',
+   desc:'LOG 312 — Astrophage confirmed on solar surface. Exponential reproduction cycle active. Solar output declining 0.4% per month. Venus CO₂ near depletion — Sol is now the primary host. No natural termination mechanism identified.'},
+  {sol:79, co2:4,  col:'~10²⁴', thr:'HAIL MARY',tc:'#E24B4A',
+   desc:'LOG 891 — Solar output -21% and falling. Climate projections: catastrophic cooling within 30 years. International committee authorizes Hail Mary protocol. One astronaut. One ship. No extraction plan. No backup.'}
+];
+
+function initParts() {
+  parts=[];
+  if(phase===0){
+    for(let i=0;i<50;i++) parts.push({t:0,ba:(i/50)*Math.PI*2,br:6+sr(i)*9,sp:.01+sr(i+10)*.01});
+  } else if(phase===1){
+    for(let i=0;i<90;i++) parts.push({t:1,pr:i/90,sp:.004+sr(i)*.003,off:(sr(i)*2-1)*13});
+  } else if(phase>=2){
+    for(let i=0;i<70;i++) parts.push({t:2,ang:(i/70)*Math.PI*2,r:22+sr(i)*11,spd:.007+sr(i)*.005});
+    if(phase===3) for(let i=0;i<28;i++) parts.push({t:3,pr:sr(i)*.65,sp:.003+sr(i)*.002,off:(sr(i+30)*2-1)*15});
+  }
+}
+
+function getInf(){
+  if(phase<2) return phase===1?.05:0;
+  return phase===2?.44+Math.sin(tick*.02)*.06:.83+Math.sin(tick*.015)*.04;
+}
+
+function draw(){
+  const dpr=devicePixelRatio||1;
+  const W=cv.width,H=cv.height;
+  const cw=W/dpr,ch=H/dpr;
+  g.save();
+  g.scale(dpr*(cw/680), dpr*(ch/340));
+
+  g.fillStyle='#040710'; g.fillRect(0,0,680,340);
+
+  STARS.forEach(s=>{
+    g.beginPath(); g.arc(s.x,s.y,s.r,0,Math.PI*2);
+    g.fillStyle=`rgba(200,205,235,${s.a})`; g.fill();
+  });
+
+  const inf=getInf();
+
+  for(let gr=54;gr>23;gr-=5){
+    g.beginPath(); g.arc(SX,SY,gr,0,Math.PI*2);
+    g.fillStyle=`rgba(255,148,28,${.055*(1-inf*.68)*(1-(gr-23)/33)})`; g.fill();
+  }
+
+  PL.forEach(p=>{
+    g.beginPath(); g.arc(SX,SY,p.or,0,Math.PI*2);
+    g.strokeStyle='rgba(155,160,200,.13)'; g.lineWidth=.6; g.stroke();
+  });
+
+  const rc=Math.floor(lerp(255,125,inf)), gc=Math.floor(lerp(178,60,inf)), bc=Math.floor(lerp(38,15,inf));
+  g.beginPath(); g.arc(SX,SY,22,0,Math.PI*2);
+  g.fillStyle=`rgb(${rc},${gc},${bc})`; g.fill();
+
+  if(inf>.03) ISPOT.forEach((sp,i)=>{
+    const thresh=i*.048, al=Math.min(1,(inf-thresh)*3.5);
+    if(al<=0) return;
+    const sa=sp.a0+tick*sp.sp;
+    const fr=Math.min(sp.fr,17);
+    const fx=SX+Math.cos(sa)*fr*.56, fy=SY+Math.sin(sa)*fr*.56;
+    g.beginPath(); g.arc(fx,fy,sp.sz*al,0,Math.PI*2);
+    g.fillStyle=`rgba(45,15,0,${.92*al})`; g.fill();
+  });
+
+  g.font='9px monospace'; g.textAlign='center';
+  g.fillStyle='rgba(255,175,55,.65)'; g.fillText('SOL',SX,SY+34);
+
+  PL.forEach(p=>{
+    const px=SX+Math.cos(p.an)*p.or, py=SY+Math.sin(p.an)*p.or;
+    const hiV=p.id==='venus'&&phase<=1, hiE=p.id==='earth'&&phase===3;
+    if(hiV||hiE){
+      g.beginPath(); g.arc(px,py,p.r+6,0,Math.PI*2);
+      g.strokeStyle=hiE?'rgba(226,75,74,.5)':'rgba(250,200,120,.45)';
+      g.lineWidth=1.2; g.stroke();
+    }
+    g.beginPath(); g.arc(px,py,p.r,0,Math.PI*2);
+    g.fillStyle=p.col; g.fill();
+    g.font='9px monospace'; g.fillStyle='rgba(185,190,215,.6)'; g.textAlign='center';
+    g.fillText(p.lbl,px,py-p.r-5);
+  });
+
+  if(phase===1){
+    g.beginPath(); g.moveTo(VP.x,VP.y); g.lineTo(SX,SY);
+    g.strokeStyle='rgba(250,200,120,.1)'; g.lineWidth=1;
+    g.setLineDash([3,7]); g.stroke(); g.setLineDash([]);
+  }
+
+  parts.forEach(p=>{
+    if(p.t===0){
+      const a=p.ba+tick*p.sp;
+      const px=VP.x+Math.cos(a)*p.br, py=VP.y+Math.sin(a)*p.br;
+      g.beginPath(); g.arc(px,py,1.7,0,Math.PI*2);
+      g.fillStyle='rgba(250,200,118,.8)'; g.fill();
+    } else if(p.t===1){
+      p.pr=(p.pr+p.sp)%1;
+      const dx=SX-VP.x, dy=SY-VP.y, len=Math.sqrt(dx*dx+dy*dy);
+      const nx=-dy/len, ny=dx/len;
+      const px=lerp(VP.x,SX,p.pr)+nx*p.off*Math.sin(p.pr*Math.PI);
+      const py=lerp(VP.y,SY,p.pr)+ny*p.off*Math.sin(p.pr*Math.PI);
+      g.beginPath(); g.arc(px,py,1.8,0,Math.PI*2);
+      g.fillStyle=`rgba(250,175,35,${.28+p.pr*.68})`; g.fill();
+    } else if(p.t===2){
+      p.ang+=p.spd;
+      g.beginPath(); g.arc(SX+Math.cos(p.ang)*p.r, SY+Math.sin(p.ang)*p.r,1.8,0,Math.PI*2);
+      g.fillStyle='rgba(205,95,18,.75)'; g.fill();
+    } else if(p.t===3){
+      p.pr=(p.pr+p.sp)%1;
+      const dx=EP.x-SX, dy=EP.y-SY, len=Math.sqrt(dx*dx+dy*dy);
+      const nx=-dy/len, ny=dx/len;
+      const px=lerp(SX,EP.x,p.pr)+nx*p.off*Math.sin(p.pr*Math.PI);
+      const py=lerp(SY,EP.y,p.pr)+ny*p.off*Math.sin(p.pr*Math.PI);
+      g.beginPath(); g.arc(px,py,1.5,0,Math.PI*2);
+      g.fillStyle=`rgba(226,75,74,${.35+p.pr*.55})`; g.fill();
+    }
+  });
+
+  g.font='500 9px monospace'; g.fillStyle='rgba(155,158,188,.38)';
+  g.textAlign='left'; g.fillText(`PHASE ${phase+1} / 4  ·  ASTROPHAGE TRAVERSAL MAP`,12,16);
+  g.restore();
+}
+
+function updateStats(){
+  const d=PDATA[phase];
+  const sol=document.getElementById('st-sol');
+  sol.textContent=d.sol+'%';
+  sol.style.color=d.sol<85?'#E24B4A':d.sol<99?'#EF9F27':'#e0e0e8';
+  document.getElementById('st-co2').textContent=d.co2+'%';
+  document.getElementById('st-col').textContent=d.col;
+  const thr=document.getElementById('st-thr');
+  thr.textContent=d.thr; thr.style.color=d.tc;
+  document.getElementById('pdesc').textContent=d.desc;
+}
+
+function setPhase(p){
+  phase=p; tick=0;
+  document.querySelectorAll('.pb').forEach(b=>b.classList.toggle('active',+b.dataset.p===p));
+  initParts(); updateStats();
+}
+
+function loop(){ tick++; draw(); requestAnimationFrame(loop); }
+
+function resize(){
+  const dpr=devicePixelRatio||1, rect=cv.getBoundingClientRect();
+  cv.width=rect.width*dpr; cv.height=rect.height*dpr;
+}
+
+document.querySelectorAll('.pb').forEach(b=>b.addEventListener('click',()=>setPhase(+b.dataset.p)));
+window.addEventListener('resize',resize);
+window.addEventListener('load', () => { resize(); setPhase(0); loop(); });
+</script>
+</body>
+</html>
