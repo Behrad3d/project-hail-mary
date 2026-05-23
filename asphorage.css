@@ -1,0 +1,203 @@
+/* asphorage.css — shared styles for all Project Hail Mary pages */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a0a0f;
+  color: #e0e0e8;
+  font-family: monospace;
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+  min-height: 100vh;
+}
+
+.container { width: 100%; max-width: 800px; }
+
+h1 {
+  font-size: 11px;
+  color: rgba(160,162,190,.4);
+  font-weight: 400;
+  letter-spacing: .1em;
+  margin-bottom: 1.25rem;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 380px;
+  border-radius: 10px;
+  border: 0.5px solid rgba(160,162,190,.18);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.stat-card {
+  background: rgba(255,255,255,.05);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 0.5px solid rgba(160,162,190,.1);
+}
+
+.stat-label {
+  font-size: 10px;
+  color: rgba(160,162,190,.45);
+  margin-bottom: 4px;
+  letter-spacing: .06em;
+}
+
+.stat-val {
+  font-size: 20px;
+  font-weight: 500;
+  color: #e0e0e8;
+  transition: color .3s;
+}
+
+.controls, .btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn {
+  background: rgba(255,255,255,.05);
+  color: rgba(200,202,220,.7);
+  font-family: monospace;
+  font-size: 12px;
+  border: 0.5px solid rgba(160,162,190,.18);
+  border-radius: 8px;
+  padding: 9px 16px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.btn:hover { background: rgba(255,255,255,.09); color: #e0e0e8; }
+.btn-play  { flex: 2; }
+.btn-reset { flex: 1; }
+.btn-speed { flex: 1; }
+
+.log {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.04);
+  border-left: 2px solid #EF9F27;
+  font-size: 12px;
+  color: rgba(190,192,215,.65);
+  line-height: 1.8;
+  min-height: 44px;
+}
+
+/* phase bar — 01, 02 */
+.phase-bar {
+  display: flex;
+  border: 0.5px solid rgba(160,162,190,.2);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.pb {
+  flex: 1;
+  background: transparent;
+  color: rgba(180,182,210,.55);
+  font-family: monospace;
+  font-size: 11px;
+  border: none;
+  padding: 10px 4px;
+  cursor: pointer;
+  border-right: 0.5px solid rgba(160,162,190,.2);
+  transition: background .15s, color .15s;
+}
+.pb:last-child { border-right: none; }
+.pb.active { background: rgba(255,255,255,.07); color: #e0e0e8; font-weight: 600; }
+.pb:hover:not(.active) { background: rgba(255,255,255,.04); color: rgba(200,202,225,.8); }
+
+/* ctrl-row — 00 */
+.ctrl-row { display: flex; align-items: center; gap: 12px; }
+.ctrl-label { font-size: 10px; color: rgba(160,162,190,.5); width: 140px; letter-spacing: .06em; }
+.ctrl-val { font-size: 13px; font-weight: 500; color: #e0e0e8; min-width: 20px; }
+input[type="range"] { flex: 1; accent-color: #EF9F27; }
+
+/* cb buttons — 03 */
+.cb {
+  background: rgba(255,255,255,.04);
+  border: 0.5px solid rgba(160,162,190,.2);
+  border-radius: 6px;
+  color: rgba(180,182,210,.7);
+  font-family: monospace;
+  font-size: 12px;
+  padding: 9px 4px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.cb:hover { background: rgba(255,255,255,.09); color: #e0e0e8; }
+
+/* ── page-specific overrides ── */
+
+body.page-00, body.page-01, body.page-02, body.page-03 { background: #0f0f14; }
+
+.page-00 .container,
+.page-01 .container,
+.page-02 .container,
+.page-03 .container { max-width: 780px; }
+
+.page-00 h1, .page-01 h1, .page-02 h1 {
+  font-size: 13px;
+  color: rgba(160,162,190,.5);
+  margin-bottom: 1.5rem;
+  letter-spacing: .08em;
+}
+
+.page-03 h1 {
+  color: rgba(160,162,190,.5);
+  margin-bottom: 1.5rem;
+  letter-spacing: .08em;
+}
+
+.page-00 canvas, .page-01 canvas, .page-02 canvas, .page-03 canvas {
+  height: 360px;
+  border-radius: 8px;
+}
+
+.page-00 .stats { grid-template-columns: repeat(3, 1fr); }
+
+.page-00 .stat-card,
+.page-01 .stat-card,
+.page-02 .stat-card,
+.page-03 .stat-card { border-color: rgba(160,162,190,.12); }
+
+.page-00 .stat-label,
+.page-01 .stat-label,
+.page-02 .stat-label,
+.page-03 .stat-label { color: rgba(160,162,190,.5); }
+
+.page-00 .log,
+.page-01 .log,
+.page-02 .log,
+.page-03 .log {
+  color: rgba(190,192,215,.7);
+  min-height: unset;
+}
+
+.page-00 .log { display: grid; gap: 10px; }
+
+.page-03 .log { min-height: 42px; }
+
+/* 00 .btn override — btn-row style, not 04-style controls */
+.page-00 .btn {
+  flex: 1;
+  background: rgba(255,255,255,.04);
+  border: 0.5px solid rgba(160,162,190,.2);
+  border-radius: 6px;
+  color: rgba(180,182,210,.7);
+  padding: 9px 4px;
+}
+.page-00 .btn:hover { background: rgba(255,255,255,.09); color: #e0e0e8; }
+
+@media (max-width: 560px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  canvas { height: 280px; }
+}
