@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Astrophage Visualizer — Project Hail Mary</title>
+  <link rel="stylesheet" href="astrophage.css">
+  <style>
+    body { align-items: flex-start; padding-top: 3rem; }
+
+    .hero {
+      margin-bottom: 2.5rem;
+    }
+    .hero h1 {
+      font-size: 11px;
+      color: rgba(160,162,190,.4);
+      letter-spacing: .12em;
+      margin-bottom: .6rem;
+      font-weight: 400;
+    }
+    .hero-title {
+      font-family: monospace;
+      font-size: 22px;
+      font-weight: 600;
+      color: #e0e0e8;
+      margin-bottom: .75rem;
+      letter-spacing: .02em;
+    }
+    .hero-sub {
+      font-size: 12px;
+      color: rgba(160,162,190,.55);
+      line-height: 1.7;
+      max-width: 560px;
+    }
+    .hero-sub span {
+      color: #EF9F27;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .grid .card:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    .card {
+      background: rgba(255,255,255,.04);
+      border: 0.5px solid rgba(160,162,190,.14);
+      border-radius: 10px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color .2s, background .2s;
+    }
+    .card:hover {
+      background: rgba(255,255,255,.065);
+      border-color: rgba(160,162,190,.28);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card-num {
+      font-size: 10px;
+      color: #EF9F27;
+      letter-spacing: .1em;
+      opacity: .7;
+      min-width: 20px;
+    }
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0e0e8;
+      letter-spacing: .03em;
+    }
+
+    .card-desc {
+      font-size: 11px;
+      color: rgba(160,162,190,.55);
+      line-height: 1.75;
+      flex: 1;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .tag {
+      font-size: 10px;
+      color: rgba(160,162,190,.45);
+      background: rgba(255,255,255,.04);
+      border: 0.5px solid rgba(160,162,190,.12);
+      border-radius: 4px;
+      padding: 3px 7px;
+      letter-spacing: .04em;
+    }
+
+    .card a.launch {
+      display: block;
+      text-align: center;
+      font-family: monospace;
+      font-size: 12px;
+      color: rgba(200,202,220,.7);
+      background: rgba(255,255,255,.05);
+      border: 0.5px solid rgba(160,162,190,.18);
+      border-radius: 8px;
+      padding: 9px 16px;
+      text-decoration: none;
+      transition: background .15s, color .15s;
+    }
+    .card a.launch:hover {
+      background: rgba(239,159,39,.12);
+      border-color: rgba(239,159,39,.35);
+      color: #EF9F27;
+    }
+
+    .footer {
+      margin-top: 2.5rem;
+      font-size: 10px;
+      color: rgba(160,162,190,.3);
+      letter-spacing: .08em;
+      border-top: 0.5px solid rgba(160,162,190,.1);
+      padding-top: 1.25rem;
+    }
+
+    @media (max-width: 560px) {
+      .grid { grid-template-columns: 1fr; }
+      .grid .card:last-child:nth-child(odd) { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <h1>TECHY WANDERS — PROJECT HAIL MARY</h1>
+      <div class="hero-title">Astrophage Visualizer</div>
+      <p class="hero-sub">
+        Five iterative simulations of the <span>astrophage</span> life cycle from Andy Weir's
+        <em>Project Hail Mary</em> — from a basic cellular automaton to a full orbital model
+        with a rotating Petrova line. No frameworks. No dependencies.
+      </p>
+    </div>
+
+    <div class="grid">
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-num">00</span>
+          <span class="card-title">Cellular Automaton</span>
+        </div>
+        <p class="card-desc">
+          Grid-based colony spread across a stellar surface patch. Three sliders let you tune
+          reproduction rate, consumption rate, and energy-seeking bias in real time.
+          Watch the solar output meter drop.
+        </p>
+        <div class="card-tags">
+          <span class="tag">interactive sliders</span>
+          <span class="tag">agent migration</span>
+          <span class="tag">geometric growth</span>
+        </div>
+        <a class="launch" href="00_Astrophage.html">Launch →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-num">01</span>
+          <span class="card-title">Solar System Map</span>
+        </div>
+        <p class="card-desc">
+          Top-down system view stepped through four narrative phases — Origin, Migration,
+          Infection, Crisis. The Petrova line appears as a dashed guide. The Sun visibly
+          darkens in the final phases.
+        </p>
+        <div class="card-tags">
+          <span class="tag">4 manual phases</span>
+          <span class="tag">Petrova line</span>
+          <span class="tag">narrative arc</span>
+        </div>
+        <a class="launch" href="01_Astrophage.html">Launch →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-num">02</span>
+          <span class="card-title">Life Cycle Map</span>
+        </div>
+        <p class="card-desc">
+          The correct round-trip cycle: energize at Sol → migrate to Venus → collect CO₂ →
+          mitosis → return doubled. Amber particles are originals; orange are offspring.
+          Petrova line thickens each cycle.
+        </p>
+        <div class="card-tags">
+          <span class="tag">5 manual phases</span>
+          <span class="tag">colony doubling</span>
+          <span class="tag">bidirectional traffic</span>
+        </div>
+        <a class="launch" href="02_Astrophage.html">Launch →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-num">03</span>
+          <span class="card-title">Continuous Timeline</span>
+        </div>
+        <p class="card-desc">
+          Automatic playback through all 8 cycles to solar crisis. A timeline bar tracks
+          progress and shifts from green to red. Stats update live — solar output, CO₂,
+          Astrophage colony size, and year.
+        </p>
+        <div class="card-tags">
+          <span class="tag">play / pause / speed</span>
+          <span class="tag">live stats</span>
+          <span class="tag">auto advance</span>
+        </div>
+        <a class="launch" href="03_Astrophage.html">Launch →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-num">04</span>
+          <span class="card-title">Orbital Motion</span>
+        </div>
+        <p class="card-desc">
+          The final version. All four planets orbit at correct relative speeds with fading
+          trails. The Petrova line rotates with Venus — migration streams follow the live
+          Sun→Venus vector as the planet moves.
+        </p>
+        <div class="card-tags">
+          <span class="tag">orbital mechanics</span>
+          <span class="tag">rotating Petrova line</span>
+          <span class="tag">fading trails</span>
+        </div>
+        <a class="launch" href="04_Astrophage.html">Launch →</a>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      NO FRAMEWORKS &nbsp;·&nbsp; NO BUILD TOOLS &nbsp;·&nbsp; NO DEPENDENCIES &nbsp;·&nbsp;
+      JUST CANVAS + MATH
+    </div>
+  </div>
+</body>
+</html>

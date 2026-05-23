@@ -142,6 +142,7 @@ The seeded random function (`sr()`) uses a sine-based hash so particle positions
 
 ```
 /
+├── index.html           # Landing page — links to all five visualizations
 ├── 00_Astrophage.html   # Cellular automaton, interactive sliders
 ├── 01_Astrophage.html   # Solar system map, 4 manual phases
 ├── 02_Astrophage.html   # Life cycle map, 5 manual phases + Petrova line
