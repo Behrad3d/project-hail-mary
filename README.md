@@ -2,7 +2,7 @@
 
 > Companion code for the TechyWanders video on Project Hail Mary by Andy Weir.
 
-📺 **Video:** `[URL TO BE ADDED]`
+📺 **Video:** https://youtu.be/VId7PlleStw
 
 ---
 
@@ -156,7 +156,7 @@ The seeded random function (`sr()`) uses a sine-based hash so particle positions
 
 ## Related
 
-- 📺 Video: `[URL TO BE ADDED]`
+- 📺 Video: https://youtu.be/VId7PlleStw
 - 📚 *Project Hail Mary* — Andy Weir (2021)
 - 🔭 TechyWanders: `[channel URL TO BE ADDED]`
 
